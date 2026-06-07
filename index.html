@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Performance Predictor</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; justify-content: center; padding: 40px 20px; }
+    .card { background: white; padding: 40px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+    h1 { font-size: 1.6rem; color: #1a202c; margin-bottom: 8px; }
+    p.sub { color: #718096; margin-bottom: 30px; font-size: 0.95rem; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.85rem; font-weight: 600; color: #4a5568; }
+    input { padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 0.95rem; outline: none; transition: border 0.2s; }
+    input:focus { border-color: #667eea; }
+    button { margin-top: 24px; width: 100%; padding: 14px; background: #667eea; color: white; font-size: 1rem; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #5a67d8; }
+    .result { margin-top: 24px; padding: 20px; background: #ebf8ff; border-radius: 10px; text-align: center; display: none; }
+    .result h2 { color: #2b6cb0; font-size: 2rem; }
+    .result p { color: #4a5568; margin-top: 6px; }
+    .error { background: #fff5f5; color: #c53030; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Student Performance Predictor</h1>
+    <p class="sub">Enter student details to predict the final grade (G3) out of 20</p>
+
+    <div class="grid">
+      <div class="field"><label>G1 — First Period Grade</label><input type="number" id="G1" placeholder="0-20"></div>
+      <div class="field"><label>G2 — Second Period Grade</label><input type="number" id="G2" placeholder="0-20"></div>
+      <div class="field"><label>Age</label><input type="number" id="age" placeholder="15-22"></div>
+      <div class="field"><label>Study Time (1-4)</label><input type="number" id="studytime" placeholder="1-4"></div>
+      <div class="field"><label>Past Failures (0-3)</label><input type="number" id="failures" placeholder="0-3"></div>
+      <div class="field"><label>Absences</label><input type="number" id="absences" placeholder="0-93"></div>
+      <div class="field"><label>Family Relations (1-5)</label><input type="number" id="famrel" placeholder="1-5"></div>
+      <div class="field"><label>Free Time (1-5)</label><input type="number" id="freetime" placeholder="1-5"></div>
+      <div class="field"><label>Going Out (1-5)</label><input type="number" id="goout" placeholder="1-5"></div>
+      <div class="field"><label>Daily Alcohol (1-5)</label><input type="number" id="Dalc" placeholder="1-5"></div>
+      <div class="field"><label>Weekend Alcohol (1-5)</label><input type="number" id="Walc" placeholder="1-5"></div>
+      <div class="field"><label>Health (1-5)</label><input type="number" id="health" placeholder="1-5"></div>
+    </div>
+
+    <button onclick="predict()">Predict Final Grade</button>
+
+    <div class="result" id="result">
+      <h2 id="grade"></h2>
+      <p id="message"></p>
+    </div>
+  </div>
+
+  <script>
+    async function predict() {
+      const fields = ['G1','G2','age','studytime','failures','absences','famrel','freetime','goout','Dalc','Walc','health'];
+      const data = {};
+
+      for (let field of fields) {
+        const val = document.getElementById(field).value;
+        if (val === '') { alert(`Please fill in ${field}`); return; }
+        data[field] = parseFloat(val);
+      }
+
+      try {
+        const response = await fetch('http://127.0.0.1:8000/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'result';
+        document.getElementById('grade').textContent = `${result.predicted_G3} / 20`;
+        document.getElementById('message').textContent = result.message;
+
+      } catch (err) {
+        const resultDiv = document.getElementById('result');
+        resultDiv.style.display = 'block';
+        resultDiv.className = 'result error';
+        document.getElementById('grade').textContent = 'Error';
+        document.getElementById('message').textContent = 'Could not connect to API. Make sure the server is running.';
+      }
+    }
+  </script>
+</body>
+</html>
